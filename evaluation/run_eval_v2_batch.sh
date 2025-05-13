@@ -7,8 +7,8 @@ gpt_eval_name=${3:-"gpt-4-turbo-2024-04-09"} # evaluator name  # gpt-4-0125-prev
 
 
 
-eval_template="evaluation/eval_template.pairwise.v2.md"
-eval_folder="eval_results/v2.0522/pairwise.v2/eval=${gpt_eval_name}/ref=${ref_name}/"
+eval_template="/home/mlynatom/WildBench/evaluation/eval_template.parwise.cs.md"
+eval_folder="/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/v2.0522/pairwise.v2/eval=${gpt_eval_name}/ref=${ref_name}/"
 echo "Evaluating $model_name vs $ref_name using $gpt_eval_name with $eval_template"
 
 
@@ -21,7 +21,7 @@ if [ -f $eval_file ]; then
     exit 0
 fi
 
-python src/eval.py \
+python /home/mlynatom/WildBench/src/eval.py \
     --batch_mode \
     --action eval \
     --model $gpt_eval_name \

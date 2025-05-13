@@ -20,8 +20,8 @@ from tenacity import (
 )  # for exponential backoff
 import google.generativeai as genai
 import cohere
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
+# from mistralai.client import MistralClient
+# from mistralai.models.chat_completion import ChatMessage
 from anthropic import Anthropic
 from reka.client import Reka
 
@@ -87,13 +87,16 @@ def load_eval_data(args, data_name=None, model_name=None):
             id_to_turn1_result = {}
             for item in mt_turn1_result:
                 id_to_turn1_result[item["question_id"]] = item["turn1_output"]
+    elif data_name == "wildbench_cs":
+        dataset = load_dataset("ctu-aic/wildbench_cs_private", split="test")
+        metadata = {"session_id": [], "primary_tag": []}
     else:
         raise ValueError(f"Data name {data_name} not supported")
 
     print(f"Loaded {len(dataset)} examples from {data_name}")
 
     for ind, item in enumerate(dataset):
-        if data_name in ["wild_bench", "wild_bench_v2_internal", "wild_bench_v2_dev"]:
+        if data_name in ["wild_bench", "wild_bench_v2_internal", "wild_bench_v2_dev", "wildbench_cs"]:
             assert item["conversation_input"][-1]["role"] == "user"
             extracted_chats = [chat["content"] for chat in item["conversation_input"]]
             chat_history.append(extracted_chats)
@@ -136,7 +139,7 @@ def clear_output(output, model_name):
 
 def save_outputs(args, id_strs, outputs, chat_history, metadata, model_inputs, filepath):
     formatted_outputs = []
-    if args.data_name in ["wild_bench", "wild_bench_v2_internal", "wild_bench_v2_dev"]:
+    if args.data_name in ["wild_bench", "wild_bench_v2_internal", "wild_bench_v2_dev", "wildbench_cs"]:
         for ind in range(len(outputs)):
             output_item = {}
             output_item["session_id"] = id_strs[ind]
@@ -573,47 +576,47 @@ def cohere_chat_request(
     return [response.text]
 
 
-def mistral_chat_request(
-    model: str=None,
-    engine: str=None,
-    temperature: float=0,
-    max_tokens: int=512,
-    top_p: float=1.0,
-    prompt: str=None,
-    messages: List[dict]=None,
-    **kwargs,
-) -> List[str]:
-    """
-    Request the evaluation prompt from the OpenAI API in chat format.
-    Args:
-        prompt (str): The encoded prompt.
-        messages (List[dict]): The messages.
-        model (str): The model to use.
-        engine (str): The engine to use.
-        temperature (float, optional): The temperature. Defaults to 0.7.
-        max_tokens (int, optional): The maximum number of tokens. Defaults to 800.
-        top_p (float, optional): The top p. Defaults to 0.95.
-    Returns:
-        List[str]: The list of generated evaluation prompts.
-    """
-    assert prompt is not None or messages is not None, "Either prompt or messages should be provided."
-    if messages is None:
-        messages = [{"role":"system","content":"You are an AI assistant that helps people find information."},
-                {"role":"user","content": prompt}]
-    api_key = os.getenv("MISTRAL_API_KEY")
-    client = MistralClient(api_key=api_key)
-    response = client.chat(
-        model=model,
-        temperature=temperature,
-        top_p=top_p,
-        max_tokens=max_tokens,
-        messages=[ChatMessage(role=message['role'], content=message['content']) for message in messages],
-    )
+# def mistral_chat_request(
+#     model: str=None,
+#     engine: str=None,
+#     temperature: float=0,
+#     max_tokens: int=512,
+#     top_p: float=1.0,
+#     prompt: str=None,
+#     messages: List[dict]=None,
+#     **kwargs,
+# ) -> List[str]:
+#     """
+#     Request the evaluation prompt from the OpenAI API in chat format.
+#     Args:
+#         prompt (str): The encoded prompt.
+#         messages (List[dict]): The messages.
+#         model (str): The model to use.
+#         engine (str): The engine to use.
+#         temperature (float, optional): The temperature. Defaults to 0.7.
+#         max_tokens (int, optional): The maximum number of tokens. Defaults to 800.
+#         top_p (float, optional): The top p. Defaults to 0.95.
+#     Returns:
+#         List[str]: The list of generated evaluation prompts.
+#     """
+#     assert prompt is not None or messages is not None, "Either prompt or messages should be provided."
+#     if messages is None:
+#         messages = [{"role":"system","content":"You are an AI assistant that helps people find information."},
+#                 {"role":"user","content": prompt}]
+#     api_key = os.getenv("MISTRAL_API_KEY")
+#     client = MistralClient(api_key=api_key)
+#     response = client.chat(
+#         model=model,
+#         temperature=temperature,
+#         top_p=top_p,
+#         max_tokens=max_tokens,
+#         messages=[ChatMessage(role=message['role'], content=message['content']) for message in messages],
+#     )
 
-    contents = []
-    for choice in response.choices:
-        contents.append(choice.message.content)
-    return contents
+#     contents = []
+#     for choice in response.choices:
+#         contents.append(choice.message.content)
+#     return contents
 
 def anthropic_chat_request(
     model: str=None,

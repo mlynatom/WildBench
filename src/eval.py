@@ -23,12 +23,12 @@ from datasets import load_dataset, get_dataset_config_names
 import tiktoken 
 import re 
 
-HF_BENCH_PATH = "allenai/WildBench"
-HF_BENCH_CONFIG = "v2"
+HF_BENCH_PATH = "ctu-aic/wildbench_cs_private"
+#HF_BENCH_CONFIG = "v2"
 HF_RESULTS_PATH = "allenai/WildBench-V2-Model-Outputs"
  
 
-print(f"Loading the benchmark data from {HF_BENCH_PATH} and the results from {HF_RESULTS_PATH}") 
+print(f"Loading the benchmark data from {HF_BENCH_PATH} and the results from ") 
 
 encoding = None 
 
@@ -430,7 +430,9 @@ def main():
         if args.mode not in ["pairwise", "score"]:
             raise Exception("Not implemented yet!")
 
-        bench_data = load_dataset(HF_BENCH_PATH, HF_BENCH_CONFIG, split="test")
+        bench_data = load_dataset(HF_BENCH_PATH, split="test") #CHANGED
+
+        local_result_file_ref = None
         
         if args.local_result_file is not None:
             with open(args.local_result_file, "r") as f:
@@ -442,13 +444,23 @@ def main():
             except Exception as e:
                 print(f"Failed to load the target model data from {HF_RESULTS_PATH}/{args.target_model_name}")
                 if args.local_result_file is None:
-                    args.local_result_file = f"result_dirs/wild_bench_v2/{args.target_model_name}.json"
+                    args.local_result_file = f"/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/wild_bench_cs/{args.target_model_name}.json"
                 print(f"Try loading from the local file {args.local_result_file}")
                 with open(args.local_result_file, "r") as f:
                     target_model_data = json.load(f)
                     print(f"Loaded the local results from {args.local_result_file}")
         if args.mode == "pairwise":
-            ref_model_data = load_dataset(HF_RESULTS_PATH, args.ref_model_name, split="train")
+            #ref_model_data = load_dataset(HF_RESULTS_PATH, args.ref_model_name, split="train")
+            try:
+                ref_model_data = load_dataset(HF_RESULTS_PATH, args.ref_model_name, split="train")
+            except Exception as e:
+                print(f"Failed to load the reference model data from {HF_RESULTS_PATH}/{args.ref_model_name}")
+                if local_result_file_ref is None:
+                    local_result_file_ref = f"/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/wild_bench_cs/{args.ref_model_name}.json"
+                print(f"Try loading from the local file {local_result_file_ref}")
+                with open(local_result_file_ref, "r") as f:
+                    ref_model_data = json.load(f)
+                    print(f"Loaded the local results from {local_result_file_ref}")
         else:
             print("No reference model is needed for checklist evaluation.")
             ref_model_data = [None] * len(target_model_data)

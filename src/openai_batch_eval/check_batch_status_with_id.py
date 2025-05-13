@@ -26,7 +26,7 @@ for batch in batches:
         if not os.path.exists(filepath.replace(".batch_results.jsonl", ".json")): # TODO: if overwrite is needed, remove this line
             submit_path = filepath.replace(".batch_results.jsonl", ".batch-submit.jsonl")
             print(f"Processing output file {filepath}")
-            os.system(f"python src/openai_batch_eval/batch_results_format.py {submit_path} {filepath}")
+            os.system(f'python /home/mlynatom/WildBench/src/openai_batch_eval/batch_results_format.py "{submit_path}" "{filepath}"')
             # print(f"Output file processed and written to {filepath.replace('.batch_results.jsonl', '.json')}")
             
             

@@ -13,10 +13,10 @@ if [ $gpt_eval_name == "gpt-4-turbo-2024-04-09" ]; then
     echo "not supported any more for the concern of cost"
     exit 0
 else
-    eval_template="evaluation/eval_template.score.v2.md"
+    eval_template="/home/mlynatom/WildBench/evaluation/eval_template.score.cs.md"
 fi
 
-eval_folder="eval_results/v2.0625/score.v2/eval=${gpt_eval_name}/"
+eval_folder="/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/v2.0625/score.v2/eval=${gpt_eval_name}/"
 echo "Evaluating $model_name using $gpt_eval_name with $eval_template"
 mkdir -p $eval_folder 
 eval_file="${eval_folder}/${model_name}.batch-submit.jsonl"
@@ -28,7 +28,7 @@ if [ -f $eval_file ]; then
 fi
 
 
-python src/eval.py \
+python /home/mlynatom/WildBench/src/eval.py \
     --batch_mode \
     --action eval \
     --model $gpt_eval_name \

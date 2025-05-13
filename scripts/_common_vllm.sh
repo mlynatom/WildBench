@@ -2,12 +2,12 @@ model_name=$1
 model_pretty_name=$2
 n_shards=$3 
 
-TEMP=0; TOP_P=1.0; MAX_TOKENS=4096; 
+TEMP=0; TOP_P=1.0; MAX_TOKENS=1024; #CHANGED!
 batch_size=1;
 
 
 CACHE_DIR=${HF_HOME:-"default"}
-output_dir="result_dirs/wild_bench_v2/"
+output_dir="wildbench_result_dirs/wild_bench_cs/"
 
 
 
@@ -22,8 +22,8 @@ if [ $n_shards -eq 1 ]; then
 
     echo "n_shards = 1; num_gpus = $num_gpus; gpu = $gpu"
     CUDA_VISIBLE_DEVICES=$gpu \
-    python src/unified_infer.py \
-        --data_name wild_bench \
+    python /home/mlynatom/WildBench/src/unified_infer.py \
+        --data_name wildbench_cs \
         --model_name $model_name \
         --use_hf_conv_template --use_imend_stop \
         --download_dir $CACHE_DIR \
@@ -44,9 +44,9 @@ elif [ $n_shards -gt 1 ]; then
     for ((start = 0, end = (($shard_size)), gpu = $start_gpu; gpu < $n_shards+$start_gpu; start += $shard_size, end += $shard_size, gpu++)); do
 
         CUDA_VISIBLE_DEVICES=$gpu \
-        python src/unified_infer.py \
+        python /home/mlynatom/WildBench/src/unified_infer.py \
             --start_index $start --end_index $end \
-            --data_name wild_bench \
+            --data_name wildbench_cs \
             --model_name $model_name \
             --use_hf_conv_template --use_imend_stop \
             --download_dir $CACHE_DIR \

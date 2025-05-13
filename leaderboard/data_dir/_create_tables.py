@@ -5,34 +5,41 @@ import sys
 from datasets import load_dataset
 from tqdm import tqdm
 
+# task_group_new = {
+#     "Information seeking": "Information/Advice seeking",
+#     "Creative Writing": "Creative Tasks",
+#     "Coding & Debugging": "Coding & Debugging",
+#     "Reasoning": "Planning & Reasoning",
+#     "Editing": "Creative Tasks",
+#     "Math": "Math & Data Analysis",
+#     "Planning": "Planning & Reasoning",
+#     "Brainstorming": "Creative Tasks",
+#     "Role playing": "Creative Tasks",
+#     "Advice seeking": "Information/Advice seeking",
+#     "Data Analysis": "Math & Data Analysis",
+#     "Others": "Creative Tasks"
+# }
+
 task_group_new = {
-    "Information seeking": "Information/Advice seeking",
-    "Creative Writing": "Creative Tasks",
-    "Coding & Debugging": "Coding & Debugging",
-    "Reasoning": "Planning & Reasoning",
-    "Editing": "Creative Tasks",
-    "Math": "Math & Data Analysis",
-    "Planning": "Planning & Reasoning",
-    "Brainstorming": "Creative Tasks",
-    "Role playing": "Creative Tasks",
-    "Advice seeking": "Information/Advice seeking",
-    "Data Analysis": "Math & Data Analysis",
-    "Others": "Creative Tasks"
+    "Reasoning & Planning": "Planning & Reasoning",
+    "Math & Data": "Math & Data Analysis",
+    "Info Seeking": "Information/Advice seeking",
 }
 
 # print(list(set(task_group_new.values())))
 
 task_mapping = {}
-wb_data = load_dataset("allenai/WildBench", "v2", split="test")
+wb_data = load_dataset("ctu-aic/wildbench_cs_private", split="test")
 for item in wb_data:
     
-    tags = [item["primary_tag"]] + item["secondary_tags"]
-    task_mapping[item["id"]] = []
+    tags = [item["primary_tag"]]
+    task_mapping[item["session_id"]] = []
     for tag in tags:
-        task_mapping[item["id"]].append(task_group_new[tag])
+        #task_mapping[item["session_id"]].append(task_group_new[tag])
+        task_mapping[item["session_id"]].append(task_group_new.get(tag, tag))
 
     # deduplicate
-    task_mapping[item["id"]] = list(set(task_mapping[item["id"]]))
+    #task_mapping[item["session_id"]] = [item["primary_tag"]]
         
         
     # # remove "Others"
@@ -41,8 +48,8 @@ for item in wb_data:
 
 # all_task_types = ['Information seeking', 'Creative Writing', 'Coding & Debugging', 'Reasoning', 'Editing', 'Math', 'Planning', 'Brainstorming', 'Role playing', 'Advice seeking', 'Data Analysis']
 
-PAIRWISE_FOLDER = "eval_results/v2.0522"
-SCORE_FOLDER = "eval_results/v2.0625"
+PAIRWISE_FOLDER = "/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/v2.0522"
+SCORE_FOLDER = "/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/v2.0625"
 ACTION = sys.argv[1] 
 K = -1 # for pairwise length margin
 
@@ -62,7 +69,11 @@ elif ACTION == "pairwise-llama":
 elif ACTION == "pairwise-haiku":
     folder = FOLDER+"/pairwise.v2/eval=gpt-4-turbo-2024-04-09/ref=claude-3-haiku-20240307"
     MODE = "pairwise"
-    ref_model = "claude-3-haiku-20240307" 
+    ref_model = "claude-3-haiku-20240307"
+elif ACTION == "pairwise-B+IT":
+    ref_model = "meta-llama/Llama-3.1-8B-Instruct"
+    folder = FOLDER+"/pairwise.v2/eval=gpt-4-turbo-2024-04-09/ref=B+IT"
+    MODE = "pairwise"
 elif ACTION == "score":
     # folder = FOLDER+"/score.v2/eval=gpt-4-turbo-2024-04-09/"
     folder = FOLDER+"/score.v2/eval=gpt-4o-2024-05-13/"
@@ -70,6 +81,7 @@ elif ACTION == "score":
 elif ACTION == "score-sonnet":
     folder = FOLDER+"/score.v2/eval=claude-3-5-sonnet-20240620/"
     MODE = "score"
+
 else:
     print("Please provide either 'pairwise' or 'score' as the argument")
     sys.exit()
@@ -202,6 +214,9 @@ for file in tqdm(files, desc=f"Processing {folder.replace(FOLDER, '')}"):
                 "Coding & Debugging": 1.25
             }
             # row_item["task_macro_reward"] = sum(task_cat_reward.values()) / len(task_cat_reward)
+
+            print(task_cat_reward)
+            print(weights_by_task)
             row_item["task_macro_reward"] = sum([task_cat_reward[tag] * weights_by_task[tag] for tag in task_cat_reward]) / sum(weights_by_task.values())
             row_item["K"] = K
             # row_item["win_rate"] = (row_item["win"] + row_item["win_much"]) / row_item["total"]
@@ -277,7 +292,7 @@ for item in table:
 if MODE=="pairwise":
     ACTION = f"{ACTION}-K={K}"
 
-with open(f"leaderboard/data_dir/{ACTION}.json", "w") as f:
+with open(f"/home/mlynatom/master-thesis-repository-tomas-mlynar/wildbench_result_dirs/leaderboard/data_dir/{ACTION}.json", "w") as f:
     json.dump(result, f, indent=2)
 
 """
